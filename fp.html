@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, shrink-to-fit=no, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Simple Sidebar - Start Bootstrap Template</title>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="css/simple-sidebar.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+</head>
+
+<body>
+State Monad
+
+Type definition
+<pre>
+    <code>
+  class State[S, +A](val run: S => (S, A)) {
+    def map[B](f: A => B): State[S, B] = {
+      State(s => {
+        val (next, a) = run(s)
+        (next, f(a))
+      })
+    }
+
+    def flatMap[B](f: A => State[S, B]): State[S, B] = {
+      State(s => {
+        val (next, a) = run(s)
+        val (last: S, b: B) = f(a).run(next)
+        (last, b)
+      })
+    }
+
+    def runA(s: S): A = run(s)._2
+  }
+
+  object State {
+    def apply[S, A](run: S => (S, A)): State[S, A] = new State(run)
+  }
+    </code>
+</pre>
+
+Usage:
+<pre>
+    <code>
+object Demo {
+
+  case class Input(counter: Int)
+
+  type InputState = State[Int, Option[String]]
+
+
+  val incCounterIfZero: InputState = {
+    State(s => {
+      if (s == 0) (s + 1, Some("Incremented"))
+      else (s, None)
+    })
+  }
+
+  val inc: InputState = {
+    State(s => {
+      (s + 1, Some("Incremented"))
+    })
+  }
+
+
+  val pow: InputState = {
+    State(s => {
+      (s * s, Some("Power"))
+    })
+  }
+
+  val program: State[Int, List[Option[String]]] = for {
+    e1 <- inc
+    e2 <- inc
+    e3 <- pow
+    e4 <- incCounterIfZero
+  } yield List(e1, e2, e3, e4)
+
+  def main(args: Array[String]): Unit = {
+    println("state")
+    println(program.run(0))
+  }
+}
+    </code>
+</pre>
+
+Result:
+<pre>
+    <code>
+        (4,List(Some(Incremented), Some(Incremented), Some(Power), None))
+    </code>
+</pre>
+
+</body>
